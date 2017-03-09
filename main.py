@@ -11,59 +11,73 @@ class App:
         frame.pack()
 
         self.select_scene_btn = Button(frame, text="Select scene", command=lambda: self.displayImage("scene"),
-                                       padx="2", pady="2", width="13")
-        self.select_scene_btn.pack(pady="5")
+                                       padx="2", pady="2").grid(row=0, column=0, sticky="WE", pady="5")
+
 
         self.select_sprite_btn = Button(frame, text="Select sprite", command=lambda: self.displayImage("sprite"),
-                                        padx="2", pady="2", width="13")
-        self.select_sprite_btn.pack(pady="5")
+                                        padx="2", pady="2").grid(row=0, column=1, sticky="WE", pady="5")
 
-        self.merge_btn = Button(frame, text="Merge", padx="2", pady="2", width="13")
-        self.merge_btn.pack(pady="5")
+        self.merge_btn = Button(frame, text="Merge", padx="2", pady="2", command=self.mergeImages).grid(row=0, column=2, sticky="WE", pady="5")
 
-        self.save_btn = Button(frame, text="Save & compress", padx="2", pady="2", width="13")
-        self.save_btn.pack(pady="5")
+
+        self.save_btn = Button(frame, text="Save & compress", padx="2", pady="2").grid(row=0, column=3, sticky="WE", pady="5")
+
 
         self.close_button = Button(frame, text="Close", command=frame.quit,
-                                   padx="2", pady="2", width="13")
-        self.close_button.pack(pady="5")
+                                   padx="2", pady="2").grid(row=0, column=4, sticky="WE", pady="5")
 
-        self.sceneCanvas = Canvas(root, width=930, height=600)
-        self.spriteCanvas = Canvas(root, width=256, height=256)
+
+        self.sceneLabel = Label(root)
+        self.spriteLabel = Label(root)
+        self.mergedLabel = Label(root)
 
 
     def displayImage(self, identifier):
         self.imgPath = filedialog.askopenfilename()
         if identifier == "scene":
             self.sceneImg = Image.open(self.imgPath)
-            self.sceneImg.thumbnail((256,256))
+            # self.sceneImg.thumbnail((256,256))
+            '''
             self.scenePhoto = ImageTk.PhotoImage(self.sceneImg)
             self.sceneCanvas.create_image((0, 0), image=self.scenePhoto, anchor="nw")
             self.sceneCanvas.image = self.scenePhoto
             self.sceneCanvas.pack()
+            '''
+            self.scenePhoto = ImageTk.PhotoImage(self.sceneImg)
+            self.sceneLabel.config(image=self.scenePhoto)
+            self.sceneLabel.pack(side="left")
 
         else:
             self.spriteImg = Image.open(self.imgPath)
-            self.spriteImg.thumbnail((256,256))
+            # self.spriteImg.thumbnail((256,256))
+            '''
             self.spritePhoto = ImageTk.PhotoImage(Image.open(self.imgPath))
             self.spriteCanvas.create_image((0, 0), image=self.spritePhoto, anchor="nw")
             self.spriteCanvas.image = self.spritePhoto
             self.spriteCanvas.pack()
+            '''
+            self.spritePhoto = ImageTk.PhotoImage(self.spriteImg)
+            self.spriteLabel.config(image=self.spritePhoto)
+            self.spriteLabel.pack(side="left")
+
+
 
         # return self.imgPath if len(self.imgPath) > 0 else "No image selected"
 
     def mergeImages(self):
-        """
-        Steps to merging scene & sprite
-        1. create an image with the size and bg colour you want in RGBA mode
-        2. create blank image of the same size in mode "1" to be used as a mask
-        3. past the sprite on the mask using ImageDraw module
-        4. use Image.paste(colour, box, mask) to paste the colour (0,0,0,0) everywhere the sprite is in the mask
-        :return:
-        """
+        self.mergedImg = self.sceneImg
+        spriteWidth, spriteHeight = self.spriteImg.size
+        sceneWidth, sceneHeight = self.sceneImg.size
+        offset = (int((sceneWidth - spriteWidth) / 2), int((sceneHeight - spriteHeight) / 2))
+        # need to figure out way to build a proper mask, greyscale mask doesn't work correctly
+        mask = self.spriteImg.convert("L", dither=0)
+        self.mergedImg.paste(self.spriteImg, offset, mask)
+        self.mergedPhoto = ImageTk.PhotoImage(self.mergedImg)
+        self.mergedLabel.config(image=self.mergedPhoto)
+        self.mergedLabel.pack(side="left")
 
 
 root = Tk()
-root.resizable(width=True, height=True)
+#root.resizable(width=True, height=True)
 app = App(root)
 root.mainloop()
