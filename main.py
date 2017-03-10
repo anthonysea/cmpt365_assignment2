@@ -13,14 +13,15 @@ class App:
         self.select_scene_btn = Button(frame, text="Select scene", command=lambda: self.displayImage("scene"),
                                        padx="2", pady="2").grid(row=0, column=0, sticky="WE", pady="5")
 
-
         self.select_sprite_btn = Button(frame, text="Select sprite", command=lambda: self.displayImage("sprite"),
                                         padx="2", pady="2").grid(row=0, column=1, sticky="WE", pady="5")
 
-        self.merge_btn = Button(frame, text="Merge", padx="2", pady="2", command=self.mergeImages).grid(row=0, column=2, sticky="WE", pady="5")
+        self.merge_btn = Button(frame, text="Merge", padx="2", pady="2",
+                                command=self.mergeImages).grid(row=0, column=2, sticky="WE", pady="5")
 
 
-        self.save_btn = Button(frame, text="Save & compress", padx="2", pady="2").grid(row=0, column=3, sticky="WE", pady="5")
+        self.compress_save_btn = Button(frame, text="Save & compress",
+                               padx="2", pady="2", command=self.compress).grid(row=0, column=3, sticky="WE", pady="5")
 
 
         self.close_button = Button(frame, text="Close", command=frame.quit,
@@ -61,20 +62,38 @@ class App:
             self.spriteLabel.pack(side="left")
 
 
-
-        # return self.imgPath if len(self.imgPath) > 0 else "No image selected"
-
     def mergeImages(self):
         self.mergedImg = self.sceneImg
         spriteWidth, spriteHeight = self.spriteImg.size
         sceneWidth, sceneHeight = self.sceneImg.size
         offset = (int((sceneWidth - spriteWidth) / 2), int((sceneHeight - spriteHeight) / 2))
         # need to figure out way to build a proper mask, greyscale mask doesn't work correctly
-        mask = self.spriteImg.convert("L", dither=0)
+        mask = self.spriteImg.convert("1")
         self.mergedImg.paste(self.spriteImg, offset, mask)
-        self.mergedPhoto = ImageTk.PhotoImage(self.mergedImg)
-        self.mergedLabel.config(image=self.mergedPhoto)
-        self.mergedLabel.pack(side="left")
+        self.mergedImg.save('merged.png')
+        self.mergedImg.show()
+        #self.mergedPhoto = ImageTk.PhotoImage(self.mergedImg)
+        #self.mergedLabel.config(image=self.mergedPhoto)
+        #self.mergedLabel.pack(side="left")
+
+    def compress(self):
+        # convert image from RGB to YUV
+        self.mergedImgRaw = cv2.imread('merged.png')
+        self.mergedImgRaw = cv2.cvtColor(self.mergedImgRaw, cv2.COLOR_BGR2YUV)
+
+        subsampleV = 4
+        subsampleH = 4
+        uf = cv2.boxFilter(self.mergedImgRaw[:,:,1], ddepth=-1, ksize=(2,2))
+        vf = cv2.boxFilter(self.mergedImgRaw[:,:,2], ddepth=-1, ksize=(2,2))
+        u_sub = uf[::subsampleV, ::subsampleH]
+        v_sub = vf[::subsampleV, ::subsampleH]
+        self.imgSub = [self.mergedImgRaw[:,:,0], u_sub, v_sub]
+
+        npArray = numpy.asarray(self.imgSub)
+        testImg = Image.fromarray(npArray, mode="YCbCr")
+        testImg.show()
+
+
 
 
 root = Tk()
