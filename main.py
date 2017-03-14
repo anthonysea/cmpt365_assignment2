@@ -3,7 +3,7 @@ import tkinter.filedialog as filedialog
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import cv2
-import numpy
+import numpy as np
 
 class App:
     def __init__(self, master):
@@ -89,9 +89,65 @@ class App:
         v_sub = vf[::subsampleV, ::subsampleH]
         self.imgSub = [self.mergedImgRaw[:,:,0], u_sub, v_sub]
 
-        npArray = numpy.asarray(self.imgSub)
-        testImg = Image.fromarray(npArray, mode="YCbCr")
-        testImg.show()
+        QY = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
+                       [12, 12, 14, 19, 26, 48, 60, 55],
+                       [14, 13, 16, 24, 40, 57, 69, 56],
+                       [14, 17, 22, 29, 51, 87, 80, 62],
+                       [18, 22, 37, 56, 68, 109, 103, 77],
+                       [24, 35, 55, 64, 81, 104, 113, 92],
+                       [49, 64, 78, 87, 103, 121, 120, 101],
+                       [72, 92, 95, 98, 112, 100, 103, 99]])
+
+        QC = np.array([[17, 18, 24, 47, 99, 99, 99, 99],
+                       [18, 21, 26, 66, 99, 99, 99, 99],
+                       [24, 26, 56, 99, 99, 99, 99, 99],
+                       [47, 66, 99, 99, 99, 99, 99, 99],
+                       [99, 99, 99, 99, 99, 99, 99, 99],
+                       [99, 99, 99, 99, 99, 99, 99, 99],
+                       [99, 99, 99, 99, 99, 99, 99, 99],
+                       [99, 99, 99, 99, 99, 99, 99, 99]])
+
+        QF = 50
+        if QF < 50 and QF > 1:
+            scale = np.floor(5000 / QF)
+        elif QF < 100:
+            scale = 200 - 2 * QF
+        scale = scale / 100.0
+        Q = [QY * scale, QC * scale, QC * scale]
+
+        # dct transform
+
+        transformVals = []
+        imgQuantVals = []
+        blockSize = 8
+
+        for idx, channel in enumerate(self.imgSub):
+            # width and height of channel
+            chanRows = channel.shape[0]
+            chanCols = channel.shape[1]
+
+            # zero the matrices
+            transformBlock = np.zeros((chanRows, chanCols), np.float32)
+            transformQuant = np.zeros((chanRows, chanCols), np.float32)
+
+            # set block width and height
+            blockHeight = chanRows / blockSize
+            blockWidth = chanCols / blockSize
+
+            # create a copy of the img and zero it's matrix
+            vis0 = np.zeros((chanRows, chanCols), np.float32)
+            vis0[:chanRows, :chanCols] = channel
+            vis0 = vis0 - 128 # offset the vals by 128
+            for row in range(int(blockHeight)):
+                for col in range(int(blockWidth)):
+                    currentBlock = cv2.dct(vis0[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize])
+                    transformBlock[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = currentBlock
+                    transformQuant[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = np.round(currentBlock / Q[idx])
+            transformVals.append(transformBlock)
+            imgQuantVals.append(transformQuant)
+
+
+
 
 
 
