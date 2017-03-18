@@ -1,5 +1,6 @@
 from tkinter import *
 import tkinter.filedialog as filedialog
+import PIL
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
@@ -94,6 +95,7 @@ class App:
         u_sub = uf[::subsampleV, ::subsampleH]
         v_sub = vf[::subsampleV, ::subsampleH]
         self.imgSub = [self.mergedImgRaw[:,:,0], u_sub, v_sub]
+        self.h, self.w = self.mergedImgRaw.shape[:2]
 
 
 
@@ -130,6 +132,14 @@ class App:
 
         np.save('compressed.mrg', imgQuantVals)
         print(imgQuantVals)
+
+        # flatten array
+        for channel in range(len(imgQuantVals)):
+            imgQuantVals[channel] = imgQuantVals.flatten()
+
+        flattened = np.append(imgQuantVals[0], [imgQuantVals[1], imgQuantVals[2], [self.h, self.w]])
+        np.savetxt('compressed.mrg', flattened)
+
 
 root = Tk()
 app = App(root)

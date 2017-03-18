@@ -3,6 +3,7 @@ import tkinter.filedialog as filedialog
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
+import math
 
 
 # block size for chunks
@@ -45,16 +46,24 @@ class App:
 
 
     def decompress(self, imgPath):
-        # load quantization array
-        imgQuantVals = np.load('compressed.mrg.npy')
+        # load and unflatten mrg file
+        loadedArray = np.loadtxt('compressed.mrg')
+        h, w = loadedArray[-2:]
+        loadedArray = loadedArray[:-2]
+        chrH = math.ceil(h / 4)
+        chrW = math.ceil(w / 4)
 
-        h = len(imgQuantVals[0])
-        w = len(imgQuantVals[0][0])
-        print(h, w)
+        imgQuantVals = np.split(loadedArray, [int(h * w), int(h * w) + (chrH * chrW)])
+        imgQuantVals = np.asarray(imgQuantVals)
+
+        # reshape the array
+        imgQuantVals[0] = np.reshape(imgQuantVals[0], (int(h), int(w)))
+        imgQuantVals[1] = np.reshape(imgQuantVals[1], (chrH, chrW))
+        imgQuantVals[2] = np.reshape(imgQuantVals[2], (chrH, chrW))
 
         DecAll = np.zeros((int(h), int(w), 3), np.uint8)
 
-        # run idct transform on each block
+        # run idct transform on each block in array
         for id, channel in enumerate(imgQuantVals):
             chanRows = channel.shape[0]
             chanCols = channel.shape[1]
