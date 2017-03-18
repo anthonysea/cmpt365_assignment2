@@ -1,7 +1,6 @@
 from tkinter import *
 import tkinter.filedialog as filedialog
 from PIL import Image, ImageTk
-import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
@@ -51,39 +50,19 @@ class App:
                        [99, 99, 99, 99, 99, 99, 99, 99],
                        [99, 99, 99, 99, 99, 99, 99, 99]])
 
-        QF = 50
-        if QF < 50 and QF > 1:
-            scale = np.floor(5000 / QF)
-        elif QF < 100:
-            scale = 200 - 2 * QF
-        scale = scale / 100.0
-        Q = [QY * scale, QC * scale, QC * scale]
+        self.Q = [QY, QC, QC]
 
 
     def displayImage(self, identifier):
         self.imgPath = filedialog.askopenfilename()
         if identifier == "scene":
             self.sceneImg = Image.open(self.imgPath)
-            # self.sceneImg.thumbnail((256,256))
-            '''
-            self.scenePhoto = ImageTk.PhotoImage(self.sceneImg)
-            self.sceneCanvas.create_image((0, 0), image=self.scenePhoto, anchor="nw")
-            self.sceneCanvas.image = self.scenePhoto
-            self.sceneCanvas.pack()
-            '''
             self.scenePhoto = ImageTk.PhotoImage(self.sceneImg)
             self.sceneLabel.config(image=self.scenePhoto)
             self.sceneLabel.pack(side="left")
 
         else:
             self.spriteImg = Image.open(self.imgPath)
-            # self.spriteImg.thumbnail((256,256))
-            '''
-            self.spritePhoto = ImageTk.PhotoImage(Image.open(self.imgPath))
-            self.spriteCanvas.create_image((0, 0), image=self.spritePhoto, anchor="nw")
-            self.spriteCanvas.image = self.spritePhoto
-            self.spriteCanvas.pack()
-            '''
             self.spritePhoto = ImageTk.PhotoImage(self.spriteImg)
             self.spriteLabel.config(image=self.spritePhoto)
             self.spriteLabel.pack(side="left")
@@ -145,17 +124,13 @@ class App:
                 for col in range(int(blockWidth)):
                     currentBlock = cv2.dct(vis0[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize])
                     transformBlock[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = currentBlock
-                    transformQuant[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = np.round(currentBlock / Q[idx])
+                    transformQuant[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = np.round(currentBlock / self.Q[idx])
             transformVals.append(transformBlock)
             imgQuantVals.append(transformQuant)
 
-
-
-
-
-
+        np.save('compressed.mrg', imgQuantVals)
+        print(imgQuantVals)
 
 root = Tk()
-#root.resizable(width=True, height=True)
 app = App(root)
 root.mainloop()
