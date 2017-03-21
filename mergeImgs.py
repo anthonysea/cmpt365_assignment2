@@ -119,28 +119,42 @@ class App:
             blockWidth = chanCols / blockSize
 
             # create a copy of the img and zero it's matrix
-            vis0 = np.zeros((chanRows, chanCols), np.float32)
-            vis0[:chanRows, :chanCols] = channel
-            vis0 -= 128 # offset the vals by 128
+            arrCopy = np.zeros((chanRows, chanCols), np.float32)
+            arrCopy[:chanRows, :chanCols] = channel
+            arrCopy -= 128 # offset the vals by 128
             for row in range(int(blockHeight)):
                 for col in range(int(blockWidth)):
-                    currentBlock = cv2.dct(vis0[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize])
+                    currentBlock = cv2.dct(arrCopy[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize])
                     transformBlock[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = currentBlock
                     transformQuant[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = np.round(currentBlock / self.Q[idx])
             transformVals.append(transformBlock)
             imgQuantVals.append(transformQuant)
 
-        np.save('compressed.mrg', imgQuantVals)
-        print(imgQuantVals)
+        #np.save('compressed.mrg', imgQuantVals)
+        imgQuantVals = np.asarray(imgQuantVals)
 
         # flatten array
+        '''
+        print(len(imgQuantVals))
         for channel in range(len(imgQuantVals)):
-            imgQuantVals[channel] = imgQuantVals.flatten()
+            imgQuantVals[channel] = imgQuantVals[channel].flatten()
+        '''
 
-        flattened = np.append(imgQuantVals[0], [imgQuantVals[1], imgQuantVals[2], [self.h, self.w]])
+        imgQuantVals[0] = imgQuantVals[0].flatten()
+        imgQuantVals[1] = imgQuantVals[1].flatten()
+        imgQuantVals[2] = imgQuantVals[2].flatten()
+
+
+
+
+
+        #flattened = np.append(imgQuantVals[0], imgQuantVals[1], imgQuantVals[2], self.h, self.w)
+        flattened = np.concatenate([imgQuantVals[0], imgQuantVals[1], imgQuantVals[2], [self.h, self.w]])
+        print(flattened)
         np.savetxt('compressed.mrg', flattened)
 
 
 root = Tk()
+root.wm_title("Merge & Compress Image")
 app = App(root)
 root.mainloop()

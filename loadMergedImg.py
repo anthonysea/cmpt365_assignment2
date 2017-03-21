@@ -61,7 +61,7 @@ class App:
         imgQuantVals[1] = np.reshape(imgQuantVals[1], (chrH, chrW))
         imgQuantVals[2] = np.reshape(imgQuantVals[2], (chrH, chrW))
 
-        DecAll = np.zeros((int(h), int(w), 3), np.uint8)
+        restoredImg = np.zeros((int(h), int(w), 3), np.uint8)
 
         # run idct transform on each block in array
         for id, channel in enumerate(imgQuantVals):
@@ -69,27 +69,25 @@ class App:
             chanCols = channel.shape[1]
             blocksV = chanRows / blockSize
             blocksH = chanCols / blockSize
-            back0 = np.zeros((chanRows, chanCols), np.uint8)
+            recImg = np.zeros((chanRows, chanCols), np.uint8)
             for row in range(int(blocksV)):
                 for col in range(int(blocksH)):
                     dequantBlock = channel[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] * Q[id]
                     currentBlock = np.round(cv2.idct(dequantBlock)) + 128
                     currentBlock[currentBlock > 255] = 255
                     currentBlock[currentBlock < 0] = 0
-                    back0[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = currentBlock
-            back0 = cv2.resize(back0, (int(w), int(h)))
-            DecAll[:, :, id] = np.round(back0)
+                    recImg[row * blockSize: (row + 1) * blockSize, col * blockSize: (col + 1) * blockSize] = currentBlock
+            recImg = cv2.resize(recImg, (int(w), int(h)))
+            restoredImg[:, :, id] = np.round(recImg)
 
-        restoredImg = cv2.cvtColor(DecAll, cv2.COLOR_YUV2BGR)
+        restoredImg = cv2.cvtColor(restoredImg, cv2.COLOR_YUV2BGR)
         cv2.imshow('', restoredImg)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-def flatten():
-    # flatten 
 
 
 root = Tk()
-#root.resizable(width=True, height=True)
+root.wm_title("Decompress & Display Image")
 app = App(root)
 root.mainloop()
