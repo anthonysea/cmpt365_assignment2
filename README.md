@@ -1,4 +1,3 @@
-# cmpt365_assignment2
 # Image Merger & Image Decompresser
 
 This repository contains two programs, one of which merges two images and loads the image quantization values into a .mrg file.
